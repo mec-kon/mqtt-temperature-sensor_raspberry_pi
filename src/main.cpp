@@ -13,9 +13,8 @@ using namespace std;
 using namespace std::chrono;
 
 
-float get_temperature(){
+float get_temperature(int8_t slave_address_read){
 #ifdef IS_RASPBERRY_PI
-    int8_t slave_address_read = wiringPiI2CSetup (0x48) ;
     uint16_t lm75_temp_int = wiringPiI2CReadReg16(slave_address_read,0x00);
 
     if(lm75_temp_int == 0xffff){
@@ -56,8 +55,13 @@ int main()
 
     Mqtt *mqtt = new Mqtt(MQTT_CLIENT_ID, MQTT_PUBLISH_TOPIC, subscription_topic_list, MQTT_ADDRESS, MQTT_PORT, MQTT_CLIENT, MQTT_CLIENT_PASSWORD);
 
+#ifdef IS_RASPBERRY_PI
+    int8_t slave_address_read = wiringPiI2CSetup (0x48);
+#else
+    int8_t slave_address_read = 0;
+#endif
     while (true) {
-        string temp = to_string_with_precision(get_temperature());
+        string temp = to_string_with_precision(get_temperature(slave_address_read));
         cout << "temp = " << temp << endl;
         mqtt->publish(temp);
 
